@@ -1,0 +1,62 @@
+{
+  "name": "ssl-nginx",
+  "version": "1.0.0",
+  "author": "Tundra Fizz",
+  "description": "Automatically creates an SSL certificate for a domain that's currently online.",
+  "main": "main.js",
+  "license": "ISC",
+  "dependencies": {
+    "ssl-nginx": "latest"
+  },
+  "scripts": {
+    "start": "node main.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "args": {
+    "usage": "yoloswag <options>",
+    "-f": {
+      "desc": "Server file's relative location (example: my-app/server.js)",
+      "long": "--filename",
+      "default": null,
+      "flag": false,
+      "req": true
+    },
+    "-e": {
+      "desc": "Email address to use for SSL (example: john.doe@gmail.com)",
+      "default": null,
+      "flag": false,
+      "req": true
+    },
+    "-n": {
+      "desc": "Name of the project (example: MyProject)",
+      "default": null,
+      "flag": false,
+      "req": true
+    },
+    "-i": {
+      "desc": "IP address (example: 216.58.194.206)",
+      "default": null,
+      "flag": false,
+      "req": true
+    },
+    "-p": {
+      "desc": "Port number (example: 80)",
+      "default": null,
+      "flag": false,
+      "req": true
+    },
+    "-d": {
+      "desc": "Domain name (example: wikipedia.com)",
+      "default": null,
+      "flag": false,
+      "req": true
+    },
+    "-s": {
+      "desc": "Sample flag",
+      "long": "--flag",
+      "default": false,
+      "flag": true,
+      "req": false
+    }
+  }
+}

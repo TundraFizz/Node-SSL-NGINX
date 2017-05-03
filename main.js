@@ -4,7 +4,7 @@ var os         = require("os");
 var execSync   = require("child_process").execSync;
 var FlagParser = require("flag-parser");
 
-// sudo node main.js -f ../tundrafizz.space/server.js -e MageLeif@Yahoo.com -n tundrafizz.space -i 34.208.168.25 -p 9002 -d tundrafizz.space
+// sudo node main.js -f ../Port-9002-Sample/server.js -e MageLeif@Yahoo.com -n tundrafizz.space -i 34.208.168.25 -p 9002 -d tundrafizz.space -dh PRE
 
 /*
   Requirements: A server that is installed,
@@ -19,7 +19,7 @@ SSLNginx.prototype.Initialize = function(){return new Promise((resolve) => {
 
     yoloSwag.GetArgs()
     .then((arguments) => {
-      console.log(arguments);
+      // console.log(arguments);
       this.args = arguments;
       this.Run();
     });
@@ -30,7 +30,6 @@ SSLNginx.prototype.Initialize = function(){return new Promise((resolve) => {
 })};
 
 SSLNginx.prototype.Run = function(){
-  this.cwd           = __dirname.replace(/\\/g, "/");
   this.serviceDir    = "/etc/systemd/system";
   this.nginxConf     = "/etc/nginx/conf.d/mysites.conf";
   this.absolutePath  = this.args["-f"];
@@ -40,15 +39,35 @@ SSLNginx.prototype.Run = function(){
   this.ip            = this.args["-i"];
   this.port          = this.args["-p"];
   this.domainName    = this.args["-d"];
+  this.dhparam       = this.args["-dh"];
   this.wizard        = this.args["-w"];
 
   this.absolutePath = require("path").resolve(this.absolutePath);
   this.entryPoint   = require("path").basename(this.absolutePath)
   this.absolutePath = require("path").dirname(this.absolutePath);
-  console.log(this.absolutePath);
-  console.log(this.entryPoint);
 
   this.domainName = `${this.domainName} www.${this.domainName}`;
+
+  if(!fs.existsSync("/etc/letsencrypt/live/dhparam.pem")){
+    if(this.dhparam && this.dhparam.toLowerCase() == "generate"){
+      console.log("Generating a dhparam.pem file");
+      console.log("This will take a very long time");
+      console.log("Please be patient");
+      execSync("sudo mkdir /etc/letsencrypt");
+      execSync("sudo mkdir /etc/letsencrypt/live");
+      execSync("sudo openssl dhparam -out /etc/letsencrypt/live/dhparam.pem 4096");
+    }else if(this.dhparam && this.dhparam.toLowerCase() == "pre"){
+      execSync("sudo mkdir /etc/letsencrypt");
+      execSync("sudo mkdir /etc/letsencrypt/live");
+      fs.writeFileSync("/etc/letsencrypt/live/dhparam.pem", this.PrebuiltDhparam(), "utf-8");
+      execSync("sudo pkill nginx");
+      execSync("sudo nginx");
+    }else{
+      console.log("dhparam.pem doesn't exist. You need to provide the -dh flag with the option of GENERATE or PRE depending on if you want to GENERATE a new dhparam.pem file, or use a PRE-built one.");
+    }
+  }
+
+  return;
 
   this.CreateServiceFile(this)
   .then(this.CreateBackupNginxConf, this.Error)
@@ -212,6 +231,22 @@ SSLNginx.prototype.RoundTwo = function(){
   `  location / {proxy_pass http://${this.ip}:${this.port};}\n`                      +
   `}\n`;
 };
+
+SSLNginx.prototype.PrebuiltDhparam = function(){
+  return `-----BEGIN DH PARAMETERS-----\n`                             +
+  `MIICCAKCAgEA1K6ggBjAn6jgRyxWr/dR2ECqXFpt9O4DB/SJ9bRlnudQQCpW4hht\n` +
+  `p2o6QcBJoO5Em62wamSyk8sgrVOic0iUZKbDorucSGowk1prnuL5P2J8e7/N8GoO\n` +
+  `dWDOz7UEHvr3G3orl5NvHh1y80YH8sE6GlsSyY7CuhjbbQLv4F3FUGU9Ajb1lOy9\n` +
+  `bAE7umxYYWOXMDUcV/HsYbQOFgx3zid9drTodgQo6XGdoO5Sc4RGEGqI97k7SRp8\n` +
+  `In8p0avwEBKaoKvxYPPi5LSyeGwCSZ6U8J9qKqeMM0D4fJqYY7mmkat7NHzK6MgE\n` +
+  `j0q9WnPgFHuDYu1l9fHfLE6mTQorXRG3mif8I+/KyiCZ7UwlSXGIU7biGYVL+cna\n` +
+  `KYkeXSkm1ZhcMXyv9JTGd50U43JigGkW309AMKHxozrImTWWLRGD6148f3Y3h3Sx\n` +
+  `I011p0i7lzcfM0gnDPSo00dUA7yS3Cwg8OeMSEYvTulqKiiUfntMZF8I+X6C5Uch\n` +
+  `qayAOSoGBygNbRuyIOqcDC+UOcVUkZXVO4RiFPrMTjG11CxJJk+bR1p2oIcDSUAC\n` +
+  `iy/UsEP+aiEb0JeCgCgIh7PQ91BzWQ2jgrEgK3tEfxhstaL6AV2XRkA/kz1meHPs\n` +
+  `QJTTh+d4vjjuA8mf7uVuLvoTDzrY9soM+aAL/cx7sTws+/u7Q3KuuRMCAQI=\n`     +
+  `-----END DH PARAMETERS-----\n`;
+}
 
 SSLNginx.prototype.Error = function(error) {return new Promise((resolve) => {
   console.log(error);

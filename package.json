@@ -15,7 +15,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/TundraFizz/Node-SSL-NGINX"
-  }
+  },
   "args": {
     "usage": "yoloswag <options>",
     "-f": {
@@ -55,11 +55,11 @@
       "flag": false,
       "req": true
     },
-    "-s": {
-      "desc": "Sample flag",
-      "long": "--flag",
-      "default": false,
-      "flag": true,
+    "-dh": {
+      "desc": "Only used if dhparam.pem doesn't exist yet. Set this to GENERATE to create a new file, or set it to PRE in order to use a prebuilt one.",
+      "long": "--dhparam",
+      "default": null,
+      "flag": false,
       "req": false
     }
   }

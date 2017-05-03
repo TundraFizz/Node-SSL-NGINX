@@ -149,7 +149,7 @@ SSLNginx.prototype.RestoreOriginalConf = function(self){return new Promise((reso
   var oldFile = `${self.nginxConf}.orig`;
   var newFile = `${self.nginxConf}`;
   console.log(newFile);
-  var cmd = `cp ${oldFile} ${newFile}`;
+  var cmd = `mv ${oldFile} ${newFile}`;
 
   try{
     execSync(cmd);

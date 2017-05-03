@@ -6,12 +6,16 @@
   "main": "main.js",
   "license": "ISC",
   "dependencies": {
-    "ssl-nginx": "latest"
+    "flag-parser": "latest"
   },
   "scripts": {
     "start": "node main.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TundraFizz/Node-SSL-NGINX"
+  }
   "args": {
     "usage": "yoloswag <options>",
     "-f": {

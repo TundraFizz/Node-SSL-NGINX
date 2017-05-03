@@ -4,10 +4,11 @@ var os         = require("os");
 var execSync   = require("child_process").execSync;
 var FlagParser = require("flag-parser");
 
-// cls && node main.js -a test-server.js -e MageLeif@Yahoo.com -n YoloProj -i 127.0.0.1 -p 80 -d google.com
+// sudo node main.js -f ../tundrafizz.space/server.js -e MageLeif@Yahoo.com -n tundrafizz.space -i 34.208.168.25 -p 9002 -d tundrafizz.space
 
 /*
-  Requirements: A server that's already running
+  Requirements: A server that is installed,
+  but not running and doesn't have a service file
 */
 
 function SSLNginx(){}
@@ -40,7 +41,6 @@ SSLNginx.prototype.Run = function(){
   this.port          = this.args["-p"];
   this.domainName    = this.args["-d"];
   this.wizard        = this.args["-w"];
-  this.isWindows     = os.platform().includes("win"); // Debug purposes
 
   this.absolutePath = require("path").resolve(this.absolutePath);
   this.entryPoint   = require("path").basename(this.absolutePath)
@@ -49,11 +49,6 @@ SSLNginx.prototype.Run = function(){
   console.log(this.entryPoint);
 
   this.domainName = `${this.domainName} www.${this.domainName}`;
-
-  if(this.isWindows){
-    this.serviceDir = "C:/Users/leif.coleman/Desktop/conf";
-    this.nginxConf  = "C:/Users/leif.coleman/Desktop/conf/mysites.conf";
-  }
 
   this.CreateServiceFile(this)
   .then(this.CreateBackupNginxConf, this.Error)
@@ -84,14 +79,20 @@ SSLNginx.prototype.CreateServiceFile = function(self){return new Promise((resolv
       throw err;
     }
 
+    // Now that the service file has been created...
+    execSync(`sudo systemctl daemon-reload`);              // Reload the service files
+    execSync(`sudo systemctl enable ${self.projectName}`); // Auto-start on boot
+    execSync(`sudo systemctl start ${self.projectName}`);  // Start the service
+
     resolve(self);
   });
 })};
 
 SSLNginx.prototype.CreateBackupNginxConf = function(self){return new Promise((resolve) => {
+  execSync(`touch ${self.nginxConf}`);
   var oldFile = `${self.nginxConf}`;
   var newFile = `${self.nginxConf}.orig`;
-  var cmd = `copy /Y "${oldFile}" "${newFile}"`;
+  var cmd = `cp ${oldFile} ${newFile}`;
 
   try{
     execSync(cmd);
@@ -113,12 +114,6 @@ SSLNginx.prototype.AppendFile = function(self){return new Promise((resolve) => {
 })};
 
 SSLNginx.prototype.RestartNginx = function(self){return new Promise((resolve) => {
-  if(self.isWindows){
-    console.log("Simulating RestartNginx on Windows");
-    resolve(self);
-    return;
-  }
-
   try{
     execSync("sudo pkill nginx");
   }catch(error){
@@ -127,7 +122,7 @@ SSLNginx.prototype.RestartNginx = function(self){return new Promise((resolve) =>
 
   try{
     execSync("sudo nginx");
-    resolve();
+    resolve(self);
   }catch(error){
     throw "Could not execute command: sudo nginx";
   }
@@ -146,11 +141,6 @@ SSLNginx.prototype.CreateSSL = function(self){return new Promise((resolve) => {
   var cmd = `sudo certbot certonly --non-interactive --webroot --agree-tos --email ${self.email} -w ${self.absolutePath}/static ${domains}`;
   console.log(cmd);
 
-  if(self.isWindows){
-    resolve(self);
-    return;
-  }
-
   execSync(cmd);
   resolve(self);
 })};
@@ -159,7 +149,7 @@ SSLNginx.prototype.RestoreOriginalConf = function(self){return new Promise((reso
   var oldFile = `${self.nginxConf}.orig`;
   var newFile = `${self.nginxConf}`;
   console.log(newFile);
-  var cmd = `copy /Y "${oldFile}" "${newFile}"`;
+  var cmd = `cp ${oldFile} ${newFile}`;
 
   try{
     execSync(cmd);

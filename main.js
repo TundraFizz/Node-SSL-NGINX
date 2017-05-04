@@ -55,7 +55,7 @@ SSLNginx.prototype.Run = function(){
       console.log("Please be patient");
       execSync("sudo mkdir /etc/letsencrypt");
       execSync("sudo mkdir /etc/letsencrypt/live");
-      execSync("sudo openssl dhparam -out /etc/letsencrypt/live/dhparam.pem 4096");
+      execSync("sudo openssl dhparam -out /etc/letsencrypt/live/dhparam.pem 2048");
     }else if(this.dhparam && this.dhparam.toLowerCase() == "pre"){
       execSync("sudo mkdir /etc/letsencrypt");
       execSync("sudo mkdir /etc/letsencrypt/live");

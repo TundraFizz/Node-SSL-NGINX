@@ -30,8 +30,6 @@ SSLNginx.prototype.Initialize = function(){return new Promise((resolve) => {
 })};
 
 SSLNginx.prototype.Run = function(){
-  this.serviceDir    = "/etc/systemd/system";
-  this.nginxConf     = "/etc/nginx/conf.d/mysites.conf";
   this.absolutePath  = this.args["-f"];
   this.mainFile      = this.args["-m"];
   this.email         = this.args["-e"];
@@ -41,6 +39,8 @@ SSLNginx.prototype.Run = function(){
   this.domainName    = this.args["-d"];
   this.dhparam       = this.args["-dh"];
   this.wizard        = this.args["-w"];
+  this.serviceDir    = `/etc/systemd/system`;
+  this.nginxConf     = `/etc/nginx/conf.d/${this.domainName}.conf`;
 
   this.absolutePath = require("path").resolve(this.absolutePath);
   this.entryPoint   = require("path").basename(this.absolutePath)
@@ -67,15 +67,11 @@ SSLNginx.prototype.Run = function(){
     }
   }
 
-  return;
-
   this.CreateServiceFile(this)
-  .then(this.CreateBackupNginxConf, this.Error)
-  .then(this.AppendFile,            this.Error)
+  .then(this.CreateNonSSLConf,      this.Error)
   .then(this.RestartNginx,          this.Error)
   .then(this.CreateSSL,             this.Error)
-  .then(this.RestoreOriginalConf,   this.Error)
-  .then(this.AppendConfSSL,         this.Error)
+  .then(this.CreateSSLConf,         this.Error)
   .then(this.RestartNginx,          this.Error);
 }
 
@@ -107,27 +103,8 @@ SSLNginx.prototype.CreateServiceFile = function(self){return new Promise((resolv
   });
 })};
 
-SSLNginx.prototype.CreateBackupNginxConf = function(self){return new Promise((resolve) => {
-  execSync(`touch ${self.nginxConf}`);
-  var oldFile = `${self.nginxConf}`;
-  var newFile = `${self.nginxConf}.orig`;
-  var cmd = `cp ${oldFile} ${newFile}`;
-
-  try{
-    execSync(cmd);
-    resolve(self);
-  }catch(error){
-    var error = "Failed to create a backup of the nginx configuration file.\n";
-    error += "Are you sure you have the correct path and filename?"
-    throw error;
-  }
-})};
-
-SSLNginx.prototype.AppendFile = function(self){return new Promise((resolve) => {
-  var file = `${self.nginxConf}`;
-  console.log(file);
-
-  fs.appendFile(file, self.RoundOne(), function(err){
+SSLNginx.prototype.CreateNonSSLConf = function(self){return new Promise((resolve) => {
+  fs.writeFile(self.nginxConf, self.RoundOne(), function(err){
     resolve(self);
   });
 })};
@@ -164,28 +141,8 @@ SSLNginx.prototype.CreateSSL = function(self){return new Promise((resolve) => {
   resolve(self);
 })};
 
-SSLNginx.prototype.RestoreOriginalConf = function(self){return new Promise((resolve) => {
-  var oldFile = `${self.nginxConf}.orig`;
-  var newFile = `${self.nginxConf}`;
-  console.log(newFile);
-  var cmd = `mv ${oldFile} ${newFile}`;
-
-  try{
-    execSync(cmd);
-    resolve(self);
-  }catch(error){
-    var error = "Failed to restore the original nginx configuration file.\n";
-    error += "Are you sure you have the correct path and filename?"
-    throw error;
-  }
-})};
-
-SSLNginx.prototype.AppendConfSSL = function(self){return new Promise((resolve) => {
-  var file = `${self.nginxConf}`;
-
-  console.log("Append to file the SSL info");
-  fs.appendFile(file, self.RoundTwo(), function(err){
-    console.log("File appended");
+SSLNginx.prototype.CreateSSLConf = function(self){return new Promise((resolve) => {
+  fs.writeFile(self.nginxConf, self.RoundTwo(), function(err){
     resolve(self);
   });
 })};
